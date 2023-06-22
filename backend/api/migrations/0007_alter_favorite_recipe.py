@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0006_alter_shoppingcart_user'),
     ]
@@ -14,6 +13,10 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='favorite',
             name='recipe',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='favorites', to='api.recipe'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='favorites',
+                to='api.recipe',
+            ),
         ),
     ]

@@ -12,7 +12,6 @@ from api.models import (
     Recipe,
     Favorite,
     ShoppingCart,
-
 )
 from recipes.constants import CACHE_PATH
 from recipes.filters import RecipeFilter
