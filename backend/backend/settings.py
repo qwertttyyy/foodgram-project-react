@@ -3,11 +3,14 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-^3mx=d85j3=ug5o$#emgscle$m!*bf#dwewui&j6(1p1f16n$g',
+)
 
-DEBUG = os.getenv('DEBUG')
+DEBUG = os.getenv('DEBUG', True)
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(' ')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(' ')
 
 # Application definition
 
@@ -130,9 +133,9 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     'SERIALIZERS': {
-        'user_create': 'users.serializers.CustomUserCreateSerializer',
-        'user': 'users.serializers.CustomUserSerializer',
-        'current_user': 'users.serializers.CustomUserSerializer',
+        'user_create': 'api.serializers.CustomUserCreateSerializer',
+        'user': 'api.serializers.CustomUserSerializer',
+        'current_user': 'api.serializers.CustomUserSerializer',
     },
     'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.AllowAny'],
