@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
 
-from api.models import RecipeIngredient, Tag, Ingredient, Recipe
+from recipes.models import Tag, Ingredient, RecipeIngredient, Recipe
 from users.models import User
 
 

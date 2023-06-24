@@ -13,7 +13,7 @@ from rest_framework.response import Response
 
 from api.constants import CACHE_PATH
 from api.filters import RecipeFilter
-from api.models import Favorite, ShoppingCart, Tag, Ingredient, Recipe
+from api.models import Favorite, ShoppingCart
 from api.pagination import RecipesPagination, UsersPagination
 from api.permissions import (
     ReadOnly,
@@ -28,6 +28,7 @@ from api.serializers import (
     FollowSerializer,
 )
 from api.utilities import create_shopping_list, generate_shopping_list_pdf
+from recipes.models import Tag, Ingredient, Recipe
 from users.models import Follow, User
 
 
@@ -75,9 +76,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if is_favorited:
             is_favorited_value = bool(int(is_favorited))
             if is_favorited_value:
-                recipes = recipes.filter(favorite__user=user)
+                recipes = recipes.filter(favorites__user=user)
             else:
-                recipes = recipes.exclude(favorite__user=user)
+                recipes = recipes.exclude(favorites__user=user)
 
         if is_in_shopping_cart:
             is_in_shopping_cart_value = bool(int(is_in_shopping_cart))

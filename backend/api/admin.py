@@ -3,12 +3,8 @@ from django.contrib import admin
 from api.models import (
     Favorite,
     ShoppingCart,
-    RecipeTag,
-    RecipeIngredient,
-    Ingredient,
-    Recipe,
-    Tag,
 )
+from recipes.models import Ingredient, Recipe, Tag, RecipeTag, RecipeIngredient
 
 
 class RecipeAdmin(admin.ModelAdmin):

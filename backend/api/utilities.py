@@ -7,7 +7,7 @@ from reportlab.pdfgen import canvas
 from reportlab.rl_settings import TTFSearchPath
 
 from api.constants import FONTS_PATH, CACHE_PATH
-from api.models import RecipeIngredient
+from recipes.models import RecipeIngredient
 
 
 def create_shopping_list(shopping_cart):
