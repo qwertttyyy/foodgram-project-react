@@ -1,38 +1,40 @@
 import os
+from io import BytesIO
 
+from django.db.models import Sum
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.rl_settings import TTFSearchPath
 
-from api.constants import FONTS_PATH, CACHE_PATH
+from api.constants import FONTS_PATH
 from recipes.models import RecipeIngredient
 
 
 def create_shopping_list(shopping_cart):
-    shopping_list = {}
-
-    for recipe in shopping_cart:
-        recipe_ingredients = RecipeIngredient.objects.filter(recipe=recipe)
-        for recipe_ingredient in recipe_ingredients:
-            ingredient = recipe_ingredient.ingredient
-            if ingredient in shopping_list:
-                shopping_list[ingredient] += recipe_ingredient.amount
-            else:
-                shopping_list[ingredient] = recipe_ingredient.amount
+    grouped_ingredients = (
+        RecipeIngredient.objects.filter(recipe__in=shopping_cart)
+        .values('ingredient__name', 'ingredient__measurement_unit')
+        .annotate(amount_sum=Sum('amount'))
+    )
 
     shopping_list = {
-        ingredient.name: '%s %s' % (amount, ingredient.measurement_unit)
-        for ingredient, amount in shopping_list.items()
+        ingredient['ingredient__name']: '%s %s'
+        % (
+            ingredient['amount_sum'],
+            ingredient['ingredient__measurement_unit'],
+        )
+        for ingredient in grouped_ingredients
     }
 
     return shopping_list
 
 
-def generate_shopping_list_pdf(shopping_cart, filename):
+def generate_shopping_list_pdf(shopping_cart):
     TTFSearchPath + (str(FONTS_PATH).replace(os.sep, '/'),)
-    pdf = canvas.Canvas(os.path.join(CACHE_PATH, filename), pagesize=letter)
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
     font = 'Consolas Bold'
     pdfmetrics.registerFont(TTFont(font, 'consolab.ttf'))
     pdf.setFont(font, 18)
@@ -55,3 +57,5 @@ def generate_shopping_list_pdf(shopping_cart, filename):
 
     pdf.showPage()
     pdf.save()
+    buffer.seek(0)
+    return buffer

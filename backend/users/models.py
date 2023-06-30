@@ -26,3 +26,8 @@ class Follow(models.Model):
                 fields=('user', 'following'), name='unique_follow'
             ),
         )
+
+    def __str__(self):
+        return '{0} {1}'.format(
+            self.following.username, self.following.username
+        )

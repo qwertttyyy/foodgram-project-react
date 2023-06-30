@@ -1,17 +1,15 @@
-import os
 from urllib.parse import unquote
 
-from djoser.views import UserViewSet
-from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from api.constants import CACHE_PATH
 from api.filters import RecipeFilter
 from api.models import Favorite, ShoppingCart
 from api.pagination import RecipesPagination, UsersPagination
@@ -89,6 +87,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return recipes
 
+    def add_or_remove_recipe(self, request, recipe, model, instance):
+        is_exists = instance.exists()
+        if request.method == 'POST':
+            if is_exists:
+                return Response(
+                    {'error': 'Рецепт уже добавлен'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            obj = model(user=request.user, recipe=recipe)
+            obj.save()
+            serializer = ReducedRecipeSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if not is_exists:
+            return Response(
+                {'errors': 'Рецепт ещё не добавлен'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(
         detail=True,
         methods=['post', 'delete'],
@@ -97,23 +115,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, id=pk)
         favorite = request.user.favorites.filter(recipe=recipe)
-        if request.method == 'POST':
-            if favorite:
-                return Response(
-                    {'error': 'Рецепт уже в избранном'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            favorite = Favorite(user=request.user, recipe=recipe)
-            favorite.save()
-            serializer = ReducedRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if not favorite:
-            return Response(
-                {'errors': 'Рецепт не добавлен в избранное'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        favorite.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.add_or_remove_recipe(request, recipe, Favorite, favorite)
 
     @action(
         detail=True,
@@ -123,23 +125,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, id=pk)
         shopping_cart = request.user.shopping_cart.filter(recipe=recipe)
-        if request.method == 'POST':
-            if shopping_cart:
-                return Response(
-                    {'error': 'Рецепт уже в списке покупок'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            shopping_cart = ShoppingCart(user=request.user, recipe=recipe)
-            shopping_cart.save()
-            serializer = ReducedRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if not shopping_cart:
-            return Response(
-                {'errors': 'Рецепт не добавлен в список покупок'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        shopping_cart.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.add_or_remove_recipe(
+            request, recipe, ShoppingCart, shopping_cart
+        )
 
     @action(
         detail=False, methods=['get'], permission_classes=[IsAuthenticated]
@@ -148,31 +136,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         shopping_cart = Recipe.objects.filter(shoppingcart__user=request.user)
         shopping_list = create_shopping_list(shopping_cart)
         filename = f'{request.user.username}_shopping_list.pdf'
-        generate_shopping_list_pdf(shopping_list, filename)
-        filepath = os.path.join(CACHE_PATH, filename)
-        with open(filepath, 'rb') as file:
-            response = HttpResponse(file, content_type='application/pdf')
-            response[
-                'Content-Disposition'
-            ] = f'attachment; filename={filename}'
-            return response
+        file = generate_shopping_list_pdf(shopping_list)
+        response = HttpResponse(file, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
 
 
 class CustomUserViewSet(UserViewSet):
     permission_classes = (IsRetrieveAuthenticatedOrReadOnly,)
     pagination_class = UsersPagination
 
-    def list(self, request, *args, **kwargs):
+    def get_queryset(self):
         paginator = self.paginate_queryset(
             self.queryset.order_by('-date_joined')
         )
-        serializer = self.get_serializer(paginator, many=True)
-        return self.get_paginated_response(serializer.data)
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        return paginator
 
     @action(
         detail=False, methods=['get'], permission_classes=[IsAuthenticated]
@@ -198,7 +176,7 @@ class CustomUserViewSet(UserViewSet):
         following = get_object_or_404(User, id=id)
         follow = Follow.objects.filter(user=following, following=follower)
         if request.method == 'POST':
-            if follower == following or follow:
+            if follower == following or follow.exists():
                 return Response(
                     {'errors': 'Нельзя подписаться на самого себя'},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -211,7 +189,7 @@ class CustomUserViewSet(UserViewSet):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if not follow:
+        if not follow.exists():
             return Response(
                 {'errors': 'Ошибка отписки'},
                 status=status.HTTP_400_BAD_REQUEST,

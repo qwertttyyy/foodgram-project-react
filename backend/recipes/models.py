@@ -61,6 +61,13 @@ class RecipeTag(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True)
 
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=('recipe', 'tag'), name='unique_recipe_tag'
+            ),
+        )
+
     def __str__(self):
         return ' {0} - {1}'.format(self.recipe.name, self.tag.name)
 
@@ -73,6 +80,14 @@ class RecipeIngredient(models.Model):
         Ingredient, on_delete=models.SET_NULL, null=True
     )
     amount = models.PositiveIntegerField(verbose_name='Кол-во')
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=('recipe', 'ingredient'),
+                name='unique_recipe_ingredient',
+            ),
+        )
 
     def __str__(self):
         return '{0} - {1}'.format(self.recipe.name, self.ingredient.name)
