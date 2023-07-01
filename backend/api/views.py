@@ -11,7 +11,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from api.filters import RecipeFilter
-from api.models import Favorite, ShoppingCart
 from api.pagination import RecipesPagination, UsersPagination
 from api.permissions import (
     ReadOnly,
@@ -26,7 +25,7 @@ from api.serializers import (
     FollowSerializer,
 )
 from api.utilities import create_shopping_list, generate_shopping_list_pdf
-from recipes.models import Tag, Ingredient, Recipe
+from recipes.models import Tag, Ingredient, Recipe, Favorite, ShoppingCart
 from users.models import Follow, User
 
 

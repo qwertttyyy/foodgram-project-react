@@ -8,7 +8,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.rl_settings import TTFSearchPath
 
-from api.constants import FONTS_PATH
+from backend.settings import FONTS_PATH
 from recipes.models import RecipeIngredient
 
 

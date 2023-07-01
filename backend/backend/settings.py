@@ -130,3 +130,5 @@ DJOSER = {
     },
     'LOGIN_FIELD': 'email',
 }
+
+FONTS_PATH = BASE_DIR / 'fonts'
