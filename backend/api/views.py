@@ -146,10 +146,17 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = UsersPagination
 
     def get_queryset(self):
-        paginator = self.paginate_queryset(
-            self.queryset.order_by('-date_joined')
-        )
-        return paginator
+        if not self.retrieve:
+            paginator = self.paginate_queryset(
+                self.queryset.order_by('-date_joined')
+            )
+            return paginator
+        return self.queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     @action(
         detail=False, methods=['get'], permission_classes=[IsAuthenticated]
