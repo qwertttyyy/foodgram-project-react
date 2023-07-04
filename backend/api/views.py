@@ -47,7 +47,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
         search_name = self.request.GET.get('name')
         if search_name:
             decoded_name = unquote(search_name)
-            queryset = queryset.filter(name__istartswith=decoded_name)
+            queryset = queryset.filter(name__contains=decoded_name)
         return queryset
 
 

@@ -43,17 +43,22 @@ def generate_shopping_list_pdf(shopping_cart):
 
     pdf.setFont(font, 12)
 
+    string_length = 70
     x = 80
     y = 700
 
     for count, (item, amount) in enumerate(shopping_cart.items()):
         count += 1
-        dots = 70 - (
+        dots_count = string_length - (
             len(str(count)) + len(item.capitalize()) + len(amount) + 4
         )
-        line = f'{count}. {item.capitalize()} {"." * dots} {amount}'
+        line = f'{count}. {item.capitalize()} {"." * dots_count} {amount}'
         pdf.drawString(x, y, line)
         y -= 25
+        if y <= 50:
+            pdf.showPage()
+            pdf.setFont(font, 12)
+            y = 725
 
     pdf.showPage()
     pdf.save()

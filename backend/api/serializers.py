@@ -41,7 +41,9 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     def validate_amount(self, amount):
         if amount <= 0:
-            serializers.ValidationError('Количество должно быть больше нуля')
+            raise serializers.ValidationError(
+                'Количество должно быть больше нуля'
+            )
         return amount
 
 
